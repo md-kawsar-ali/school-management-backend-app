@@ -6,6 +6,7 @@
 */
 
 const jwt = require('jsonwebtoken')
+const bcrypt = require('bcrypt')
 const User = require('../models/userModel');
 
 // Registration Controller
@@ -58,6 +59,49 @@ exports.registration = async (req, res) => {
 
 // Login Controller
 exports.login = async (req, res) => {
+    const { username, email, password } = req.body;
 
-    res.status(200).json({ message: 'Login' })
+    try {
+        // find user by username or email
+        const user = await User.findOne({
+            $or: [
+                { username },
+                { email }
+            ]
+        });
+
+        if (!user) {
+            return res.cookie('token', '', { httpOnly: true }).status(401).json({ message: 'Authentication Failed: User Not Found!' })
+        }
+
+        // Compare hashed password
+        isPasswordValid = await bcrypt.compare(password, user.password);
+
+        if (!isPasswordValid) {
+            return res.cookie('token', '', { httpOnly: true }).status(401).json({ message: 'Authentication Failed: Password does not match!' })
+        }
+
+        // Generate a JWT token
+        const payload = {
+            _id: user._id,
+            username: user.username,
+            email: user.email,
+            role: user.role
+        }
+
+        const token = await jwt.sign(payload, process.env.JWT_SECRET_KEY, {
+            expiresIn: '1d'
+        });
+
+        // Set the token as an HTTP-Only cookie and send response
+        return res.cookie('token', token, { httpOnly: true })
+            .status(200)
+            .json({
+                user: payload,
+                message: 'Successfully Logged In!'
+            })
+
+    } catch (err) {
+        return res.status(500).json({ message: 'An error occurred! Login failed!' })
+    }
 }
