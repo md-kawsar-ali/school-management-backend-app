@@ -7,6 +7,7 @@
 
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcrypt')
+const mongoose = require('mongoose')
 const User = require('../models/userModel');
 
 // Registration Controller
@@ -46,6 +47,15 @@ exports.registration = async (req, res) => {
             });
 
     } catch (err) {
+        // Mongoose Validation Error
+        if (err instanceof mongoose.Error.ValidationError) {
+            // Concise Error Message
+            const errMsg = err.message.split(": ");
+
+            return res.status(400).json({ error: errMsg[errMsg.length - 1] });
+        }
+
+        // Custom Validation Error
         if (err.code === 11000 && err.keyPattern.username) {
             return res.cookie('token', '', { httpOnly: true }).status(400).json({ message: 'Username is already taken!' });
 
@@ -71,14 +81,14 @@ exports.login = async (req, res) => {
         });
 
         if (!user) {
-            return res.cookie('token', '', { httpOnly: true }).status(401).json({ message: 'Authentication Failed: User Not Found!' })
+            return res.cookie('token', '', { httpOnly: true }).status(401).json({ message: 'Login Failed: User Not Found!' })
         }
 
         // Compare hashed password
         isPasswordValid = await bcrypt.compare(password, user.password);
 
         if (!isPasswordValid) {
-            return res.cookie('token', '', { httpOnly: true }).status(401).json({ message: 'Authentication Failed: Password does not match!' })
+            return res.cookie('token', '', { httpOnly: true }).status(401).json({ message: 'Login Failed: Password does not match!' })
         }
 
         // Generate a JWT token
@@ -103,5 +113,47 @@ exports.login = async (req, res) => {
 
     } catch (err) {
         return res.status(500).json({ message: 'An error occurred! Login failed!' })
+    }
+}
+
+// Logout Controller
+exports.logout = (req, res) => {
+    return res.cookie('token', '', { httpOnly: true })
+        .status(200)
+        .json({ message: 'User Logged Out!' })
+}
+
+// Get User Detail (Only for Logged In User)
+exports.getUser = async (req, res) => {
+    const username = req.decoded.username;
+
+    try {
+        // Find user excluding password and __v property
+        const user = await User.findOne({ username }).select('-password -__v');
+
+        if (!user) {
+            return res.status(404).json({ message: 'User Not Found!' })
+        }
+
+        return res.status(200).json(user);
+
+    } catch (err) {
+        return res.status(500).json({ message: 'An error occurred!' })
+    }
+}
+
+// Get All user (Only for Admin)
+exports.getAllUser = async (req, res) => {
+    try {
+        // Find user excluding password and __v property
+        const users = await User.find({}).select('-password -__v');
+
+        if (!users) {
+            return res.status(404).json({ message: 'Users Not Found!' })
+        }
+
+        return res.status(200).json(users);
+    } catch (err) {
+        return res.status(500).json({ message: 'An error occurred!' })
     }
 }

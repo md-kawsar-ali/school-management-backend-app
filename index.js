@@ -16,6 +16,7 @@ const port = 3000 || process.env.PORT;
 // Import Routers
 const indexRoute = require('./app/routers/indexRouter');
 const authRoutes = require('./app/routers/authRoutes');
+const userRoutes = require('./app/routers/userRoutes')
 
 // Middleware
 app.use(express.json())
@@ -41,6 +42,7 @@ mongoose.connect(DB_URL, {
 // Use Routers
 app.use('/', indexRoute);
 app.use('/auth', authRoutes);
+app.use('/user', userRoutes);
 
 app.listen(port, () => {
     console.log(`School Management app running on port ${port}`);

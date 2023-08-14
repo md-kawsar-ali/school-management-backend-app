@@ -13,18 +13,31 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true,
         unique: true,
-        minLength: [5, 'Too short Username!'],
-        maxLength: [15, 'Too Long Username!']
+        minLength: [5, 'Username must be at least 5 characters!'],
+        maxLength: [25, 'Username must be less than 25 characters!']
     },
     email: {
         type: String,
         required: true,
-        unique: true
+        unique: true,
+        validate: {
+            validator: function (email) {
+                // Regular expression for email validation
+                return /^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$/.test(email);
+            },
+            message: 'Please enter a valid email address'
+        }
     },
     password: {
         type: String,
         required: true,
-        minLength: [8, 'Password should be 8 or more characters!']
+        validate: {
+            validator: function (password) {
+                // Requires: min 8 characters, uppercase, lowercase, number, and special character
+                return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(password);
+            },
+            message: 'Password must contain at least 8 characters including uppercase, lowercase, number, and special character'
+        }
     },
     role: {
         type: String,

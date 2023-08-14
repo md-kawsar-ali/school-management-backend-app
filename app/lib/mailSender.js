@@ -1,3 +1,10 @@
+/*
+* Title: Mail Sender Lib
+* Description: You can easily send mail using the function below
+* Author: Md Kawsar Ali
+* Date: 14/08/23
+*/
+
 const nodemailer = require('nodemailer');
 
 // mailSender function

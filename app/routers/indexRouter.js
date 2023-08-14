@@ -1,5 +1,5 @@
 /*
-* Title: Index Router
+* Title: Index Route
 * Description: This is root router - '/'
 * Author: Md Kawsar Ali
 * Date: 12/08/23
