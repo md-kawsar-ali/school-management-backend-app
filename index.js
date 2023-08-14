@@ -15,7 +15,7 @@ const port = 3000 || process.env.PORT;
 
 // Import Routers
 const indexRoute = require('./app/routers/indexRouter');
-const authRoutes = require('./app/routers/authRoutes')
+const authRoutes = require('./app/routers/authRoutes');
 
 // Middleware
 app.use(express.json())
