@@ -1,6 +1,6 @@
 /*
 * Title: Admin Authorization Verify
-* Description: Verify User Authorization (For Admin User)
+* Description: Verify Admin Authorization (For Admin User)
 * Author: Md Kawsar Ali
 * Date: 15/08/23
 */
@@ -8,10 +8,10 @@
 const jwt = require("jsonwebtoken")
 
 const verifyAdmin = (req, res, next) => {
-    const token = req.cookies.token;
+    const accessToken = req.cookies.accessToken;
 
-    if (token) {
-        jwt.verify(token, process.env.JWT_SECRET_KEY, (err, decoded) => {
+    if (accessToken) {
+        jwt.verify(accessToken, process.env.JWT_SECRET_KEY, (err, decoded) => {
             if (err) {
                 return res.status(403).json({ message: 'Access Forbidden: Your token is not valid!' });
             }

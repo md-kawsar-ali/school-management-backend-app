@@ -13,6 +13,6 @@ const verifyAdmin = require('./../lib/verifyAdmin')
 const userController = require('./../controllers/userController');
 
 router.get('/', verifyAuth, userController.getUser);
-router.get('/all', verifyAdmin, userController.getAllUser);
+router.get('/all', verifyAuth, verifyAdmin, userController.getAllUser);
 
 module.exports = router;

@@ -5,19 +5,46 @@
 * Date: 15/08/23
 */
 
-const jwt = require("jsonwebtoken")
+const jwt = require('jsonwebtoken')
+const refreshJWT = require('./refreshJWT')
 
-const verifyAuth = (req, res, next) => {
-    const token = req.cookies.token;
+const verifyAuth = async (req, res, next) => {
+    const { accessToken, refreshToken } = req.cookies;
 
-    if (token) {
-        jwt.verify(token, process.env.JWT_SECRET_KEY, (err, decoded) => {
+    if (accessToken && refreshToken) {
+        jwt.verify(accessToken, process.env.JWT_SECRET_KEY, async (err, decoded) => {
             if (err) {
-                return res.status(403).json({ message: 'Access Forbidden: Your token is not valid!' });
-            }
 
-            req.decoded = decoded;
-            next();
+                // If accessToken is Expired refresh token!
+                if (err.message === 'jwt expired') {
+                    refreshJWT(refreshToken, (data) => {
+                        const { newAccessToken, newRefreshToken, payload } = data;
+
+                        // Set the tokens as an HTTP-Only cookie and send response
+                        res.cookie('accessToken', newAccessToken, {
+                            httpOnly: true,
+                            maxAge: 3600000 // 1 Hour
+                        })
+
+                        res.cookie('refreshToken', newRefreshToken, {
+                            httpOnly: true,
+                            maxAge: 604800000 // 7 days
+                        })
+
+                        req.decoded = payload;
+                        next();
+                        return
+                    });
+
+                } else {
+                    res.status(403).json({ message: 'Access Forbidden: Your token is not valid!' });
+                    return res.end();
+                }
+            } else {
+
+                req.decoded = decoded;
+                return next();
+            }
         });
 
     } else {

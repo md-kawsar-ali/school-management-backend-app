@@ -14,7 +14,7 @@ const User = require('../models/userModel');
 exports.registration = async (req, res) => {
     const { username, email, password } = req.body;
 
-    // Set default role = 'regular'
+    // Set default role = 'regular' (Prevent user to set role)
     const role = 'regular';
 
     try {
@@ -34,13 +34,26 @@ exports.registration = async (req, res) => {
             role: createdUser.role
         }
 
-        // Sign JWT Token
-        const token = jwt.sign(user, process.env.JWT_SECRET_KEY, {
-            expiresIn: '1d'
+        const accessToken = await jwt.sign(user, process.env.JWT_SECRET_KEY, {
+            expiresIn: '1h'
+        });
+
+        const refreshToken = await jwt.sign(user, process.env.JWT_SECRET_KEY, {
+            expiresIn: '7d'
+        });
+
+        // Set the tokens as an HTTP-Only cookie and send response
+        res.cookie('accessToken', accessToken, {
+            httpOnly: true,
+            maxAge: 3600000 // 1 Hour
         })
 
-        res.cookie('token', token, { httpOnly: true })
-            .status(201)
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            maxAge: 604800000 // 7 days
+        })
+
+        res.status(201)
             .json({
                 user,
                 message: 'Registration successful!'
@@ -91,7 +104,7 @@ exports.login = async (req, res) => {
             return res.cookie('token', '', { httpOnly: true }).status(401).json({ message: 'Login Failed: Password does not match!' })
         }
 
-        // Generate a JWT token
+        // Generate a JWT tokens
         const payload = {
             _id: user._id,
             username: user.username,
@@ -99,17 +112,30 @@ exports.login = async (req, res) => {
             role: user.role
         }
 
-        const token = await jwt.sign(payload, process.env.JWT_SECRET_KEY, {
+        const accessToken = await jwt.sign(payload, process.env.JWT_SECRET_KEY, {
             expiresIn: '1d'
         });
 
-        // Set the token as an HTTP-Only cookie and send response
-        return res.cookie('token', token, { httpOnly: true })
-            .status(200)
-            .json({
-                user: payload,
-                message: 'Successfully Logged In!'
-            })
+        const refreshToken = await jwt.sign(payload, process.env.JWT_SECRET_KEY, {
+            expiresIn: '7d'
+        });
+
+        // Set the tokens as an HTTP-Only cookie and send response
+        res.cookie('accessToken', accessToken, {
+            httpOnly: true,
+            maxAge: 3600000 // 1 Hour
+        })
+
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            maxAge: 604800000 // 7 days
+        })
+
+
+        return res.status(200).json({
+            user: payload,
+            message: 'Successfully Logged In!'
+        })
 
     } catch (err) {
         return res.status(500).json({ message: 'An error occurred! Login failed!' })
@@ -118,8 +144,10 @@ exports.login = async (req, res) => {
 
 // Logout Controller
 exports.logout = (req, res) => {
-    return res.cookie('token', '', { httpOnly: true })
-        .status(200)
+    res.cookie('accessToken', '', { httpOnly: true })
+    res.cookie('refreshToken', '', { httpOnly: true })
+
+    return res.status(200)
         .json({ message: 'User Logged Out!' })
 }
 
