@@ -7,8 +7,8 @@
 
 const express = require('express')
 const router = express.Router()
-const verifyAuth = require('./../lib/verifyAuth')
-const verifyAdmin = require('./../lib/verifyAdmin')
+const verifyAuth = require('./../helpers/verifyAuth')
+const verifyAdmin = require('./../helpers/verifyAdmin')
 
 const userController = require('./../controllers/userController');
 

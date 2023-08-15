@@ -11,12 +11,7 @@ const cors = require('cors');
 const app = express();
 const cookieParser = require('cookie-parser')
 require('dotenv').config();
-const port = 3000 || process.env.PORT;
-
-// Import Routers
-const indexRoute = require('./app/routers/indexRouter');
-const authRoutes = require('./app/routers/authRoutes');
-const userRoutes = require('./app/routers/userRoutes')
+const port = process.env.PORT || 3000;
 
 // Middleware
 app.use(express.json())
@@ -26,6 +21,11 @@ app.use(cors({
     origin: "*",
     credentials: true
 }));
+
+// Import Routers
+const indexRoute = require('./routers/indexRouter');
+const authRoutes = require('./routers/authRoutes');
+const userRoutes = require('./routers/userRoutes');
 
 // Database Info
 const DB_NAME = process.env.DB_NAME;
@@ -37,7 +37,13 @@ const DB_URL = `mongodb+srv://${DB_USERNAME}:${DB_PASSWORD}@cluster0.4wqk4qz.mon
 mongoose.connect(DB_URL, {
     useNewUrlParser: true,
     useUnifiedTopology: true
-});
+})
+    .then(() => {
+        console.log('Connected to the database!');
+    })
+    .catch((error) => {
+        console.error('Failed to connect database: ', error)
+    })
 
 // Use Routers
 app.use('/', indexRoute);

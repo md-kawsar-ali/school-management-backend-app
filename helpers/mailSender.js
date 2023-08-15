@@ -1,5 +1,5 @@
 /*
-* Title: Mail Sender Lib
+* Title: Mail Sender
 * Description: You can easily send mail using the function below
 * Author: Md Kawsar Ali
 * Date: 14/08/23
