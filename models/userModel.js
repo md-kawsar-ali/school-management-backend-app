@@ -45,6 +45,15 @@ const userSchema = new mongoose.Schema({
             values: ['admin', 'regular'],
             message: '{VALUE} is not supported'
         }
+    },
+    verificationToken: {
+        type: mongoose.Schema.Types.Mixed,
+        required: true
+    },
+    isVerified: {
+        type: Boolean,
+        default: false,
+        required: true
     }
 }, { collection: 'users' });
 

@@ -31,6 +31,11 @@ const verifyAuth = async (req, res, next) => {
         try {
             const decoded = await jwt.verify(accessToken, process.env.JWT_SECRET_KEY);
 
+            // Check the user is verified or not
+            if (!decoded.isVerified) {
+                return res.cookie('token', '', { httpOnly: true }).status(401).json({ message: 'Sorry! Your Account is not Verified! Please, check your email address and verify!' })
+            }
+
             req.decoded = decoded;
             return next();
 

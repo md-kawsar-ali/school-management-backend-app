@@ -18,6 +18,11 @@ const refreshToken = async (refreshToken, callback) => {
             role: decoded2.role
         };
 
+        // Check the user is verified or not
+        if (!decoded2.isVerified) {
+            return res.cookie('token', '', { httpOnly: true }).status(401).json({ message: 'Sorry! Your Account is not Verified! Please, check your email address and verify!' })
+        }
+
         const newAccessToken = jwt.sign(payload, process.env.JWT_SECRET_KEY, {
             expiresIn: '1h'
         });

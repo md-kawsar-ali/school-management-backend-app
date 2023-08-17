@@ -26,7 +26,7 @@ const mailSender = (to, subject, message, callback) => {
         from: process.env.FROM_EMAIL,
         to: to,
         subject: subject,
-        text: message
+        html: message
     };
 
     transporter.sendMail(mailOptions, (error, info) => {
