@@ -9,9 +9,12 @@ const express = require('express')
 const router = express.Router()
 const userController = require('../controllers/userController')
 
-router.post('/registration', userController.registration)
-router.post('/login', userController.login)
-router.get('/verify', userController.verifyEmail)
-router.get('/logout', userController.logout)
+router
+    .post('/registration', userController.registration)
+    .post('/login', userController.login)
+    .get('/verify', userController.verifyEmail)
+    .get('/logout', userController.logout)
+    .post('/forget-password', userController.forgetPassword)
+    .post('/reset-password', userController.resetPassword)
 
 module.exports = router;

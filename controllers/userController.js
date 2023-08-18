@@ -16,6 +16,11 @@ const mailSender = require('../helpers/mailSender')
 exports.registration = async (req, res) => {
     const { username, email, password } = req.body;
 
+    // Check the password
+    if (!password || !/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(password)) {
+        return res.status(403).json({ message: 'Password must contain at least 8 characters including uppercase, lowercase, number, and special character!' });
+    }
+
     // Set default role = 'regular' (Prevent user to set role)
     const role = 'regular';
     const verificationToken = crypto.randomBytes(20).toString('hex');
@@ -55,25 +60,6 @@ exports.registration = async (req, res) => {
             email: createdUser.email,
             role: createdUser.role
         }
-
-        // const accessToken = await jwt.sign(user, process.env.JWT_SECRET_KEY, {
-        //     expiresIn: '1h'
-        // });
-
-        // const refreshToken = await jwt.sign(user, process.env.JWT_SECRET_KEY, {
-        //     expiresIn: '7d'
-        // });
-
-        // // Set the tokens as an HTTP-Only cookie and send response
-        // res.cookie('accessToken', accessToken, {
-        //     httpOnly: true,
-        //     maxAge: 3600000 // 1 Hour
-        // })
-
-        // res.cookie('refreshToken', refreshToken, {
-        //     httpOnly: true,
-        //     maxAge: 604800000 // 7 days
-        // })
 
         res.status(201).json({
             user,
@@ -189,6 +175,90 @@ exports.verifyEmail = async (req, res) => {
         }
     } else {
         return res.status(404).send('Invalid verification token!');
+    }
+}
+
+// Forget Password
+exports.forgetPassword = async (req, res) => {
+    const email = typeof req.body.email === 'string' ? req.body.email : null;
+
+    if (!email || email.length <= 0) {
+        return res.status(403).json({ message: 'Invalid Email Address!' })
+    }
+
+    try {
+        const user = await User.findOne({ email });
+
+        const resetToken = await jwt.sign(
+            {
+                username: user.username
+            },
+            process.env.JWT_RESET_KEY,
+            {
+                expiresIn: '15m' // 15 minutes
+            }
+        )
+
+        // Send reset Token using Email
+        const to = user.email;
+        const subject = 'Reset Password!'
+        const restPasswordUrl = process.env.SITE_URL + '/auth/reset-password?token=' + resetToken;
+
+        const htmlMsg = `
+            <h3>Reset Password!</h3>
+            <p>To reset your new password, please <a href="${restPasswordUrl}"><strong>Click Here</strong></a></p>
+            <p>Or copy the link below and open in your browser: </p>
+            <p>${restPasswordUrl}</p>
+            <br/>
+            <p>Note: The reset link will be expired in 15 minutes!</p>
+            <br/>
+            <p>- Thanks!</p>
+        `;
+
+        mailSender(to, subject, htmlMsg, (err) => {
+            if (err) {
+                return res.status(500).json({ message: 'Failed to sent reset link!' });
+            }
+        });
+
+        return res.status(200).json({ message: 'Reset password link sent to your email address!' });
+
+    } catch (err) {
+        return res.status(404).json({ message: 'Account not found with this email address!' });
+    }
+}
+
+// Reset Password
+exports.resetPassword = async (req, res) => {
+    const token = typeof req.query.token === 'string' ? req.query.token : null;
+    const newPassword = typeof req.body.password === 'string' ? req.body.password : null;
+
+    if (!token || token.length <= 0) {
+        return res.status(403).json({ message: 'Invalid or Empty Token!' });
+    }
+
+    if (!newPassword || !/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(newPassword)) {
+        return res.status(403).json({ message: 'Password must contain at least 8 characters including uppercase, lowercase, number, and special character!' });
+    }
+
+    try {
+        const decoded = await jwt.verify(token, process.env.JWT_RESET_KEY);
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        await User.findOneAndUpdate(
+            { email: decoded.email },
+            { password: hashedPassword },
+            { new: true });
+
+        return res.status(200).json({ message: 'Your password has been reset successfully!' })
+
+    } catch (err) {
+        if (err.message === 'jwt expired') {
+            return res.status(403).json({ message: 'Your reset link is already expired! Please, try again!' })
+        }
+
+        return res.status(500).json({ message: 'Failed to reset your password!' })
     }
 }
 
