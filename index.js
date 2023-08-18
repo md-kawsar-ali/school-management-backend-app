@@ -26,17 +26,22 @@ app.use(cors({
 const indexRoute = require('./routers/indexRouter');
 const authRoutes = require('./routers/authRoutes');
 const userRoutes = require('./routers/userRoutes');
+const studentRoutes = require('./routers/studentRoutes')
 
 // Database Info
 const DB_NAME = process.env.DB_NAME;
 const DB_USERNAME = process.env.DB_USERNAME;
 const DB_PASSWORD = process.env.DB_PASSWORD;
-const DB_URL = `mongodb+srv://${DB_USERNAME}:${DB_PASSWORD}@cluster0.4wqk4qz.mongodb.net/${DB_NAME}?retryWrites=true&w=majority`;
+
+const DB_URL = `mongodb://${DB_USERNAME}:${DB_PASSWORD}@ac-ylig8bd-shard-00-00.4wqk4qz.mongodb.net:27017,ac-ylig8bd-shard-00-01.4wqk4qz.mongodb.net:27017,ac-ylig8bd-shard-00-02.4wqk4qz.mongodb.net:27017/?ssl=true&replicaSet=atlas-1n1azs-shard-0&authSource=admin&retryWrites=true&w=majority`
+
+// const DB_URL = `mongodb+srv://${DB_USERNAME}:${DB_PASSWORD}@cluster0.4wqk4qz.mongodb.net/${DB_NAME}?retryWrites=true&w=majority`;
 
 // Connect to the Database using Mongoose
 mongoose.connect(DB_URL, {
     useNewUrlParser: true,
-    useUnifiedTopology: true
+    useUnifiedTopology: true,
+    dbName: DB_NAME
 })
     .then(() => {
         console.log('Connected to the database!');
@@ -49,6 +54,7 @@ mongoose.connect(DB_URL, {
 app.use('/', indexRoute);
 app.use('/auth', authRoutes);
 app.use('/user', userRoutes);
+app.use('/student', studentRoutes);
 
 app.listen(port, () => {
     console.log(`School Management app running on port ${port}`);
