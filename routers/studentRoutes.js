@@ -15,5 +15,7 @@ router
     .get('/', verifyAuth, verifyAdmin, studentController.getAllStudent)
     .get('/:id', verifyAuth, verifyAdmin, studentController.getStudent)
     .post('/', verifyAuth, verifyAdmin, studentController.addStudent)
+    .patch('/:id', verifyAuth, verifyAdmin, studentController.updateStudent)
+    .delete('/:id', verifyAuth, verifyAdmin, studentController.deleteStudent)
 
 module.exports = router;
